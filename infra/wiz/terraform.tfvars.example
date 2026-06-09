@@ -9,6 +9,10 @@
 # consumed by BOTH the root module and the wiz-iam sub-project.
 # =============================================================================
 
+# =============================================================================
+# Original Tenant (default provider, no suffix)
+# =============================================================================
+
 # ----- Wiz service-account credentials -----
 # Generate at: Wiz Console > Settings > Service Accounts > Create Service Account
 wiz_client_id     = "REPLACE_WITH_YOUR_WIZ_CLIENT_ID"
@@ -23,41 +27,62 @@ owner          = "REPLACE_WITH_OWNER_TAG"
 aws_account_id = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
 
 # ----- AWS connector -----
-connector_name = "TF-AWS-Connector-CodeChallange"
+connector_name = "TF-AWS-Connector-AgentWorkshop"
 
 # ----- Wiz IAM role (wiz-iam sub-project) -----
-wiz_role_name     = "WizAccess-Role-CodeChallange"
-iam_policy_suffix = "-codechallange"
+wiz_role_name     = "WizAccess-Role-AgentWorkshop"
+iam_policy_suffix = "-agentworkshop"
 # Provided by Wiz: the data-center role allowed to assume the customer role.
 wiz_remote_arn = "arn:aws:iam::229870817538:role/test-eu3-AssumeRoleDelegator"
 
 # ----- GitHub connector -----
-github_connector_name = "TF-GitHub-Connector-CodeChallange"
+github_connector_name = "TF-GitHub-Connector-AgentWorkshop"
 # GitHub App ID (from the GitHub App settings page):
 github_app_id = "REPLACE_WITH_YOUR_GITHUB_APP_ID"
 # Path (relative to infra/wiz/) to the gitignored GitHub App private key PEM:
 github_app_private_key_path = "github-app.pem"
 
 # ----- Dev Wiz project -----
-project_name_dev = "TF-Project-Dev-CodeChallange"
+project_name_dev = "TF-Project-Dev-AgentWorkshop"
 
 # =============================================================================
-# Tenant 2 — second Wiz tenant connected to the SAME AWS account
+# Tenant 1 — separate Wiz tenant connected to the SAME AWS account
+# =============================================================================
+
+# ----- Tenant 1 Wiz service-account credentials -----
+wiz_client_id_t1     = "REPLACE_WITH_TENANT1_WIZ_CLIENT_ID"
+wiz_client_secret_t1 = "REPLACE_WITH_TENANT1_WIZ_CLIENT_SECRET"
+# Tenant 1 data center (may differ from the original tenant):
+wiz_env_t1 = "test"
+
+# ----- Tenant 1 Wiz IAM role (wiz-iam sub-project) -----
+wiz_role_name_t1     = "WizAccess-Role-AgentWorkshop-Tenant1"
+iam_policy_suffix_t1 = "-agentworkshop-t1"
+# Provided by Wiz: tenant 1's data-center role allowed to assume the customer role.
+wiz_remote_arn_t1 = "REPLACE_WITH_TENANT1_ASSUME_ROLE_DELEGATOR_ARN"
+
+# ----- Tenant 1 connectors / project -----
+connector_name_t1        = "TF-AWS-Connector-AgentWorkshop-Tenant1"
+github_connector_name_t1 = "TF-GitHub-Connector-AgentWorkshop-Tenant1"
+project_name_dev_t1      = "TF-Project-Dev-AgentWorkshop-Tenant1"
+
+# =============================================================================
+# Tenant 2 — separate Wiz tenant connected to the SAME AWS account
 # =============================================================================
 
 # ----- Tenant 2 Wiz service-account credentials -----
-wiz_client_id_2     = "REPLACE_WITH_TENANT2_WIZ_CLIENT_ID"
-wiz_client_secret_2 = "REPLACE_WITH_TENANT2_WIZ_CLIENT_SECRET"
-# Tenant 2 data center (may differ from tenant 1):
-wiz_env_2 = "test"
+wiz_client_id_t2     = "REPLACE_WITH_TENANT2_WIZ_CLIENT_ID"
+wiz_client_secret_t2 = "REPLACE_WITH_TENANT2_WIZ_CLIENT_SECRET"
+# Tenant 2 data center (may differ from the original tenant):
+wiz_env_t2 = "test"
 
 # ----- Tenant 2 Wiz IAM role (wiz-iam sub-project) -----
-wiz_role_name_2     = "WizAccess-Role-CodeChallange-Tenant2"
-iam_policy_suffix_2 = "-codechallange-t2"
+wiz_role_name_t2     = "WizAccess-Role-AgentWorkshop-Tenant2"
+iam_policy_suffix_t2 = "-agentworkshop-t2"
 # Provided by Wiz: tenant 2's data-center role allowed to assume the customer role.
-wiz_remote_arn_2 = "REPLACE_WITH_TENANT2_ASSUME_ROLE_DELEGATOR_ARN"
+wiz_remote_arn_t2 = "REPLACE_WITH_TENANT2_ASSUME_ROLE_DELEGATOR_ARN"
 
 # ----- Tenant 2 connectors / project -----
-connector_name_2        = "TF-AWS-Connector-CodeChallange-Tenant2"
-github_connector_name_2 = "TF-GitHub-Connector-CodeChallange-Tenant2"
-project_name_dev_2      = "TF-Project-Dev-CodeChallange-Tenant2"
+connector_name_t2        = "TF-AWS-Connector-AgentWorkshop-Tenant2"
+github_connector_name_t2 = "TF-GitHub-Connector-AgentWorkshop-Tenant2"
+project_name_dev_t2      = "TF-Project-Dev-AgentWorkshop-Tenant2"

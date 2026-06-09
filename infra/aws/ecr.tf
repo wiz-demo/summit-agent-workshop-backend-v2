@@ -1,5 +1,5 @@
 resource "aws_ecr_repository" "backend" {
-  name                 = "code-challenge-backend${local.name_suffix}"
+  name                 = "agent-workshop-backend${local.name_suffix}"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
@@ -8,7 +8,7 @@ resource "aws_ecr_repository" "backend" {
   }
 
   tags = {
-    Name = "code-challenge-backend${local.name_suffix}"
+    Name = "agent-workshop-backend${local.name_suffix}"
   }
 }
 

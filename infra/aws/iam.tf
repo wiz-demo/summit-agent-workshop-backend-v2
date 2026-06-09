@@ -1,6 +1,6 @@
 # ----- EC2 instance role (ECS agent registration, ECR read, SSM) -----
 resource "aws_iam_role" "ecs_instance" {
-  name = "code-challenge-ecs-instance${local.name_suffix}"
+  name = "agent-workshop-ecs-instance${local.name_suffix}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -40,13 +40,13 @@ resource "aws_iam_role_policy" "ecs_instance_eip" {
 }
 
 resource "aws_iam_instance_profile" "ecs_instance" {
-  name = "code-challenge-ecs-instance${local.name_suffix}"
+  name = "agent-workshop-ecs-instance${local.name_suffix}"
   role = aws_iam_role.ecs_instance.name
 }
 
 # ----- ECS task execution role (pull image from ECR, write to CloudWatch Logs) -----
 resource "aws_iam_role" "ecs_task_execution" {
-  name = "code-challenge-ecs-task-execution${local.name_suffix}"
+  name = "agent-workshop-ecs-task-execution${local.name_suffix}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

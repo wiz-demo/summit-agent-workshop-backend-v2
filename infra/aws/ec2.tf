@@ -11,13 +11,13 @@ data "aws_ssm_parameter" "ecs_ami" {
 resource "aws_eip" "backend" {
   domain = "vpc"
   tags = {
-    Name   = "code-challenge-backend${local.name_suffix}"
+    Name   = "agent-workshop-backend${local.name_suffix}"
     extend = "true"
   }
 }
 
 resource "aws_security_group" "backend" {
-  name        = "code-challenge-backend${local.name_suffix}"
+  name        = "agent-workshop-backend${local.name_suffix}"
   description = "Allow public access on 8000 to ECS container host"
   vpc_id      = aws_vpc.this.id
 
@@ -38,12 +38,12 @@ resource "aws_security_group" "backend" {
   }
 
   tags = {
-    Name = "code-challenge-backend${local.name_suffix}"
+    Name = "agent-workshop-backend${local.name_suffix}"
   }
 }
 
 resource "aws_launch_template" "ecs" {
-  name_prefix   = "code-challenge${local.name_suffix}-"
+  name_prefix   = "agent-workshop${local.name_suffix}-"
   image_id      = data.aws_ssm_parameter.ecs_ami.value
   instance_type = "t3.large"
 
@@ -76,7 +76,7 @@ resource "aws_launch_template" "ecs" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name   = "code-challenge-backend${local.name_suffix}"
+      Name   = "agent-workshop-backend${local.name_suffix}"
       owner  = var.owner
       extend = "true"
     }
@@ -85,7 +85,7 @@ resource "aws_launch_template" "ecs" {
   tag_specifications {
     resource_type = "volume"
     tags = {
-      Name   = "code-challenge-backend${local.name_suffix}"
+      Name   = "agent-workshop-backend${local.name_suffix}"
       owner  = var.owner
       extend = "true"
     }
@@ -93,7 +93,7 @@ resource "aws_launch_template" "ecs" {
 }
 
 resource "aws_autoscaling_group" "ecs" {
-  name_prefix      = "code-challenge${local.name_suffix}-"
+  name_prefix      = "agent-workshop${local.name_suffix}-"
   desired_capacity = 1
   min_size         = 1
   max_size         = 1
@@ -128,7 +128,7 @@ resource "aws_autoscaling_group" "ecs" {
 }
 
 resource "aws_ecs_capacity_provider" "this" {
-  name = "code-challenge-ec2${local.name_suffix}"
+  name = "agent-workshop-ec2${local.name_suffix}"
 
   auto_scaling_group_provider {
     auto_scaling_group_arn = aws_autoscaling_group.ecs.arn

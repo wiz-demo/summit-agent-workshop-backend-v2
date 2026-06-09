@@ -4,7 +4,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "code-challenge-wiz-connector"
+      Project     = "agent-workshop-wiz-connector"
       Environment = terraform.workspace
       ManagedBy   = "Terraform"
       owner       = var.owner
@@ -20,8 +20,15 @@ provider "wiz-v2" {
 }
 
 provider "wiz-v2" {
+  alias         = "tenant1"
+  env           = var.wiz_env_t1
+  client_id     = var.wiz_client_id_t1
+  client_secret = var.wiz_client_secret_t1
+}
+
+provider "wiz-v2" {
   alias         = "tenant2"
-  env           = var.wiz_env_2
-  client_id     = var.wiz_client_id_2
-  client_secret = var.wiz_client_secret_2
+  env           = var.wiz_env_t2
+  client_id     = var.wiz_client_id_t2
+  client_secret = var.wiz_client_secret_t2
 }

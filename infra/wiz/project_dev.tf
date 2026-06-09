@@ -10,12 +10,17 @@
 # --- Variables --------------------------------------------------------------
 
 variable "project_name_dev" {
-  description = "Display name for the dev Wiz project (follows the TF-…-CodeChallange convention used by the connectors)."
+  description = "Display name for the dev Wiz project (follows the TF-…-AgentWorkshop convention used by the connectors)."
   type        = string
 }
 
-variable "project_name_dev_2" {
-  description = "Display name for the tenant-2 dev Wiz project."
+variable "project_name_dev_t1" {
+  description = "Display name for the tenant 1 dev Wiz project."
+  type        = string
+}
+
+variable "project_name_dev_t2" {
+  description = "Display name for the tenant 2 dev Wiz project."
   type        = string
 }
 
@@ -35,16 +40,27 @@ locals {
   ])
 }
 
-# Tenant 2's cloud-account object ID. Cloud-account IDs are per-tenant, so this
-# must be looked up through the tenant-2 provider (the tenant-2 AWS connector
-# onboards the account into tenant 2).
+# Tenant 1's cloud-account object ID.
+data "wiz-v2_cloud_accounts" "dev_t1" {
+  provider = wiz-v2.tenant1
+  search   = [var.aws_account_id]
+}
+
+locals {
+  dev_cloud_account_id_t1 = one([
+    for a in data.wiz-v2_cloud_accounts.dev_t1.cloud_accounts :
+    a.id if a.external_id == var.aws_account_id
+  ])
+}
+
+# Tenant 2's cloud-account object ID.
 data "wiz-v2_cloud_accounts" "dev_t2" {
   provider = wiz-v2.tenant2
   search   = [var.aws_account_id]
 }
 
 locals {
-  dev_cloud_account_id_2 = one([
+  dev_cloud_account_id_t2 = one([
     for a in data.wiz-v2_cloud_accounts.dev_t2.cloud_accounts :
     a.id if a.external_id == var.aws_account_id
   ])
@@ -54,7 +70,7 @@ locals {
 
 resource "wiz-v2_project" "dev" {
   name        = var.project_name_dev
-  slug        = "tf-project-dev-codechallange"
+  slug        = "tf-project-dev-agentworkshop"
   description = "Development and sandbox workloads (account ${var.aws_account_id}, tag environment=ra-workshop-dev)."
 
   risk_profile = {
@@ -71,9 +87,6 @@ resource "wiz-v2_project" "dev" {
   }
 
 
-  # Scope membership to the one AWS account AND the environment=ra-workshop-dev
-  # tag. The cloud_account_links rule combines both: only resources in
-  # var.aws_account_id that also carry that tag join the project.
   cloud_account_links = [
     {
       cloud_account = local.dev_cloud_account_id
@@ -87,16 +100,53 @@ resource "wiz-v2_project" "dev" {
     },
   ]
 
-  # No code repository in scope; explicitly empty to clear any prior link
-  # (the attribute is Optional+Computed, so omitting it would retain it).
   repository_links = []
 }
+
+# --- Tenant 1 ---------------------------------------------------------------
+
+resource "wiz-v2_project" "dev_t1" {
+  provider = wiz-v2.tenant1
+
+  name        = var.project_name_dev_t1
+  slug        = "tf-project-dev-agentworkshop-t1"
+  description = "Tenant 1: development and sandbox workloads (account ${var.aws_account_id}, tag environment=ra-workshop-dev)."
+
+  risk_profile = {
+    business_impact       = "LBI"
+    is_actively_developed = "YES"
+    has_authentication    = "NO"
+    has_exposed_api       = "YES"
+    is_internet_facing    = "YES"
+    is_customer_facing    = "YES"
+    stores_data           = "NO"
+    is_regulated          = "NO"
+    sensitive_data_types  = []
+    regulatory_standards  = []
+  }
+
+  cloud_account_links = [
+    {
+      cloud_account = local.dev_cloud_account_id_t1
+      environment   = "DEVELOPMENT"
+      resource_tags_v3 = {
+        equals_any = [
+          { key_equals = "environment", value_equals = "ra-workshop-dev" },
+        ]
+      }
+    },
+  ]
+
+  repository_links = []
+}
+
+# --- Tenant 2 ---------------------------------------------------------------
 
 resource "wiz-v2_project" "dev_t2" {
   provider = wiz-v2.tenant2
 
-  name        = var.project_name_dev_2
-  slug        = "tf-project-dev-codechallange-t2"
+  name        = var.project_name_dev_t2
+  slug        = "tf-project-dev-agentworkshop-t2"
   description = "Tenant 2: development and sandbox workloads (account ${var.aws_account_id}, tag environment=ra-workshop-dev)."
 
   risk_profile = {
@@ -114,7 +164,7 @@ resource "wiz-v2_project" "dev_t2" {
 
   cloud_account_links = [
     {
-      cloud_account = local.dev_cloud_account_id_2
+      cloud_account = local.dev_cloud_account_id_t2
       environment   = "DEVELOPMENT"
       resource_tags_v3 = {
         equals_any = [
@@ -139,12 +189,22 @@ output "project_dev_name" {
   value       = wiz-v2_project.dev.name
 }
 
-output "project_dev_id_2" {
+output "project_dev_id_t1" {
+  description = "Tenant 1 Wiz project ID for the dev environment (visible in the Wiz UI)."
+  value       = wiz-v2_project.dev_t1.id
+}
+
+output "project_dev_name_t1" {
+  description = "Tenant 1 Wiz project display name."
+  value       = wiz-v2_project.dev_t1.name
+}
+
+output "project_dev_id_t2" {
   description = "Tenant 2 Wiz project ID for the dev environment (visible in the Wiz UI)."
   value       = wiz-v2_project.dev_t2.id
 }
 
-output "project_dev_name_2" {
+output "project_dev_name_t2" {
   description = "Tenant 2 Wiz project display name."
   value       = wiz-v2_project.dev_t2.name
 }

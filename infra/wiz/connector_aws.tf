@@ -25,8 +25,13 @@ variable "aws_account_id" {
   }
 }
 
-variable "connector_name_2" {
-  description = "Display name for the tenant-2 Wiz AWS connector shown in the Wiz UI."
+variable "connector_name_t1" {
+  description = "Display name for the tenant 1 Wiz AWS connector shown in the Wiz UI."
+  type        = string
+}
+
+variable "connector_name_t2" {
+  description = "Display name for the tenant 2 Wiz AWS connector shown in the Wiz UI."
   type        = string
 }
 
@@ -43,19 +48,10 @@ data "terraform_remote_state" "wiz_iam" {
   }
 }
 
-resource "wiz-v2_generic_connector" "aws_code_challenge" {
+resource "wiz-v2_generic_connector" "aws_agent_workshop" {
   name = var.connector_name
   type = "aws"
 
-  # The Wiz AWS connector schema does NOT accept a top-level account field
-  # in auth_params (we tried customerAccountID — API responded "Unexpected
-  # field"). The account is implied by the customerRoleARN. Instead we pin
-  # the scope explicitly in terraform via:
-  #   - var.aws_account_id (default "800618367342", validated as 12 digits)
-  #   - the precondition below, which fails the plan/apply if the role ARN's
-  #     account segment doesn't match var.aws_account_id
-  # Combined with skipOrganizationScan=true (extra_config) this guarantees
-  # the connector can only ever target the one named account.
   auth_params = jsonencode({
     customerRoleARN = data.terraform_remote_state.wiz_iam.outputs.role_arn
   })
@@ -67,44 +63,51 @@ resource "wiz-v2_generic_connector" "aws_code_challenge" {
     }
   }
 
-  # Minimal extra_config: forces SaaS-side scanning (no in-account scanning
-  # infrastructure required) and provides stub VPC flow log config. Stub
-  # values are stored as opaque strings by the API; actual AWS-resource
-  # validation is deferred to scan time.
   extra_config = jsonencode({
-    # Scope to a single AWS account (800618367342, where the IAM role lives).
-    # skipOrganizationScan = true tells Wiz NOT to enumerate the AWS Org from
-    # this connector, so sibling accounts in org o-4ynr318qmi are never
-    # touched. The role only exists in account 800618367342, so single-account
-    # mode == "scan only 800618367342".
-    #
-    # `includedAccounts` / `excludedAccounts` are intentionally NOT set — they
-    # are org-scan-only fields (require skipOrganizationScan = false). See
-    # /Users/itay.katz/terraform-test/docs/superpowers/specs/2026-05-05-aws-
-    # connector-extra-config-coverage-design.md ("Out of scope" section).
     skipOrganizationScan = true
-
-
-
   })
 }
 
-# Tenant 2: same AWS account, second IAM role (role_arn_2 from wiz-iam state),
-# scanned by the tenant-2 Wiz provider.
-resource "wiz-v2_generic_connector" "aws_code_challenge_t2" {
-  provider = wiz-v2.tenant2
+# --- Tenant 1 ---------------------------------------------------------------
 
-  name = var.connector_name_2
+resource "wiz-v2_generic_connector" "aws_t1" {
+  provider = wiz-v2.tenant1
+
+  name = var.connector_name_t1
   type = "aws"
 
   auth_params = jsonencode({
-    customerRoleARN = data.terraform_remote_state.wiz_iam.outputs.role_arn_2
+    customerRoleARN = data.terraform_remote_state.wiz_iam.outputs.role_arn_t1
   })
 
   lifecycle {
     precondition {
-      condition     = split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_2)[4] == var.aws_account_id
-      error_message = "Tenant 2 role ARN's account (${split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_2)[4]}) does not match var.aws_account_id (${var.aws_account_id})."
+      condition     = split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_t1)[4] == var.aws_account_id
+      error_message = "Tenant 1 role ARN's account (${split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_t1)[4]}) does not match var.aws_account_id (${var.aws_account_id})."
+    }
+  }
+
+  extra_config = jsonencode({
+    skipOrganizationScan = true
+  })
+}
+
+# --- Tenant 2 ---------------------------------------------------------------
+
+resource "wiz-v2_generic_connector" "aws_t2" {
+  provider = wiz-v2.tenant2
+
+  name = var.connector_name_t2
+  type = "aws"
+
+  auth_params = jsonencode({
+    customerRoleARN = data.terraform_remote_state.wiz_iam.outputs.role_arn_t2
+  })
+
+  lifecycle {
+    precondition {
+      condition     = split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_t2)[4] == var.aws_account_id
+      error_message = "Tenant 2 role ARN's account (${split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_t2)[4]}) does not match var.aws_account_id (${var.aws_account_id})."
     }
   }
 
@@ -122,25 +125,40 @@ output "aws_role_arn" {
 
 output "aws_connector_id" {
   description = "Wiz connector ID (visible in the Wiz UI)."
-  value       = wiz-v2_generic_connector.aws_code_challenge.id
+  value       = wiz-v2_generic_connector.aws_agent_workshop.id
 }
 
 output "aws_connector_name" {
   description = "Wiz connector display name."
-  value       = wiz-v2_generic_connector.aws_code_challenge.name
+  value       = wiz-v2_generic_connector.aws_agent_workshop.name
 }
 
-output "aws_role_arn_2" {
+output "aws_role_arn_t1" {
+  description = "ARN of the IAM role Wiz tenant 1 assumes to scan the account."
+  value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_t1
+}
+
+output "aws_connector_id_t1" {
+  description = "Tenant 1 Wiz AWS connector ID (visible in the Wiz UI)."
+  value       = wiz-v2_generic_connector.aws_t1.id
+}
+
+output "aws_connector_name_t1" {
+  description = "Tenant 1 Wiz AWS connector display name."
+  value       = wiz-v2_generic_connector.aws_t1.name
+}
+
+output "aws_role_arn_t2" {
   description = "ARN of the IAM role Wiz tenant 2 assumes to scan the account."
-  value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_2
+  value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_t2
 }
 
-output "aws_connector_id_2" {
+output "aws_connector_id_t2" {
   description = "Tenant 2 Wiz AWS connector ID (visible in the Wiz UI)."
-  value       = wiz-v2_generic_connector.aws_code_challenge_t2.id
+  value       = wiz-v2_generic_connector.aws_t2.id
 }
 
-output "aws_connector_name_2" {
+output "aws_connector_name_t2" {
   description = "Tenant 2 Wiz AWS connector display name."
-  value       = wiz-v2_generic_connector.aws_code_challenge_t2.name
+  value       = wiz-v2_generic_connector.aws_t2.name
 }

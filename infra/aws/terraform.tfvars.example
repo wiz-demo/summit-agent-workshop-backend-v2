@@ -16,10 +16,10 @@ aws_profile = "REPLACE_WITH_YOUR_AWS_PROFILE"
 
 # Required tags
 owner   = "REPLACE_WITH_OWNER_TAG"
-project = "code-challenge"
+project = "agent-workshop"
 
 # ECS cluster base name (the -dev suffix is added automatically for dev)
-ecs_cluster_name = "code-challenge"
+ecs_cluster_name = "agent-workshop"
 
 # Distinct VPC CIDR per environment (must not overlap)
 vpc_cidr_by_env = {

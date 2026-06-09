@@ -14,12 +14,12 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "backend" {
-  name              = "/ecs/code-challenge-backend${local.name_suffix}"
+  name              = "/ecs/agent-workshop-backend${local.name_suffix}"
   retention_in_days = 7
 }
 
 resource "aws_ecs_task_definition" "backend" {
-  family                   = "code-challenge-backend${local.name_suffix}"
+  family                   = "agent-workshop-backend${local.name_suffix}"
   network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn

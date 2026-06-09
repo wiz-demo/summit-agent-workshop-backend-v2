@@ -5,6 +5,9 @@
 crash.log
 crash.*.log
 
+# Local state backups (never commit)
+state-backup-*/
+
 # Terraform provider plugins and modules
 .terraform/
 .terraform.lock.hcl
