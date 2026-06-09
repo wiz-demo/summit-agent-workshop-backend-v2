@@ -34,7 +34,7 @@ Ask Mika: "Show me all publicly exposed virtual machines in subscription TF-AWS-
 **Navigate to:** Code Security → SAST Findings
 
 **Filter:**
-- Repository: `itaykz/summit-code-challenge-backend`
+- Repository: `wiz-demo/summit-code-challenge-backend`
 - Severity: HIGH, CRITICAL
 - Status: OPEN
 
@@ -61,7 +61,7 @@ Ask Mika: "Show me all publicly exposed virtual machines in subscription TF-AWS-
 **Ask Mika:**
 
 ```
-"Show me all cloud resources deployed from repository itaykz/summit-code-challenge-backend"
+"Show me all cloud resources deployed from repository wiz-demo/summit-code-challenge-backend"
 ```
 
 **Or navigate to:** Code to Cloud → Correlations
