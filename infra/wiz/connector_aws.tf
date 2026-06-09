@@ -25,6 +25,11 @@ variable "aws_account_id" {
   }
 }
 
+variable "connector_name_2" {
+  description = "Display name for the tenant-2 Wiz AWS connector shown in the Wiz UI."
+  type        = string
+}
+
 # --- Resource ---------------------------------------------------------------
 
 # Read the Wiz IAM role ARN from the wiz-iam/ sub-project's state.
@@ -84,6 +89,30 @@ resource "wiz-v2_generic_connector" "aws_code_challenge" {
   })
 }
 
+# Tenant 2: same AWS account, second IAM role (role_arn_2 from wiz-iam state),
+# scanned by the tenant-2 Wiz provider.
+resource "wiz-v2_generic_connector" "aws_code_challenge_t2" {
+  provider = wiz-v2.tenant2
+
+  name = var.connector_name_2
+  type = "aws"
+
+  auth_params = jsonencode({
+    customerRoleARN = data.terraform_remote_state.wiz_iam.outputs.role_arn_2
+  })
+
+  lifecycle {
+    precondition {
+      condition     = split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_2)[4] == var.aws_account_id
+      error_message = "Tenant 2 role ARN's account (${split(":", data.terraform_remote_state.wiz_iam.outputs.role_arn_2)[4]}) does not match var.aws_account_id (${var.aws_account_id})."
+    }
+  }
+
+  extra_config = jsonencode({
+    skipOrganizationScan = true
+  })
+}
+
 # --- Outputs ----------------------------------------------------------------
 
 output "aws_role_arn" {
@@ -99,4 +128,19 @@ output "aws_connector_id" {
 output "aws_connector_name" {
   description = "Wiz connector display name."
   value       = wiz-v2_generic_connector.aws_code_challenge.name
+}
+
+output "aws_role_arn_2" {
+  description = "ARN of the IAM role Wiz tenant 2 assumes to scan the account."
+  value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_2
+}
+
+output "aws_connector_id_2" {
+  description = "Tenant 2 Wiz AWS connector ID (visible in the Wiz UI)."
+  value       = wiz-v2_generic_connector.aws_code_challenge_t2.id
+}
+
+output "aws_connector_name_2" {
+  description = "Tenant 2 Wiz AWS connector display name."
+  value       = wiz-v2_generic_connector.aws_code_challenge_t2.name
 }
