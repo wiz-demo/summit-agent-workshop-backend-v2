@@ -30,3 +30,10 @@ provider "wiz-v2" {
   client_id     = var.wiz_client_id
   client_secret = var.wiz_client_secret
 }
+
+provider "wiz-v2" {
+  alias         = "tenant2"
+  env           = var.wiz_env_2
+  client_id     = var.wiz_client_id_2
+  client_secret = var.wiz_client_secret_2
+}
