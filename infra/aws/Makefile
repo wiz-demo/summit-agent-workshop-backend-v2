@@ -2,18 +2,21 @@ SHELL  := /bin/bash
 TF     := terraform
 TFVARS := $(CURDIR)/terraform.tfvars
 
-.PHONY: help init fmt validate require-env workspace plan apply destroy outputs smoke
+# ENV defaults to prod. Pass ENV=dev to target the additional environment.
+ENV ?= prod
+
+.PHONY: help init fmt validate check-env workspace plan apply destroy outputs smoke
 
 help:
-	@echo "Targets (state-touching targets require ENV=prod|dev):"
+	@echo "Targets (ENV defaults to prod; pass ENV=dev for the additional environment):"
 	@echo "  init        - terraform init"
 	@echo "  fmt         - terraform fmt"
 	@echo "  validate    - terraform validate"
-	@echo "  plan        - terraform plan      (e.g. make plan ENV=dev)"
-	@echo "  apply       - terraform apply     (e.g. make apply ENV=dev)"
-	@echo "  destroy     - terraform destroy   (e.g. make destroy ENV=dev)"
-	@echo "  outputs     - refresh state and print outputs (ENV required)"
-	@echo "  smoke       - hit the deployed endpoint with benign + exploit payloads (ENV required)"
+	@echo "  plan        - terraform plan      (e.g. make plan          | make plan ENV=dev)"
+	@echo "  apply       - terraform apply     (e.g. make apply         | make apply ENV=dev)"
+	@echo "  destroy     - terraform destroy   (e.g. make destroy       | make destroy ENV=dev)"
+	@echo "  outputs     - refresh state and print outputs"
+	@echo "  smoke       - hit the deployed endpoint with benign + exploit payloads"
 	@echo ""
 	@echo "Requires SSO: aws sso login --profile dev-product-cto-play"
 
@@ -26,13 +29,11 @@ fmt:
 validate:
 	$(TF) validate
 
-require-env:
-	@if [ -z "$(ENV)" ]; then \
-	  echo "ERROR: ENV is required. Use ENV=prod or ENV=dev (e.g. make apply ENV=dev)"; exit 1; fi
+check-env:
 	@if [ "$(ENV)" != "prod" ] && [ "$(ENV)" != "dev" ]; then \
 	  echo "ERROR: ENV must be prod or dev (got '$(ENV)')"; exit 1; fi
 
-workspace: require-env
+workspace: check-env
 	@$(TF) workspace select $(ENV) 2>/dev/null || $(TF) workspace new $(ENV)
 
 plan: workspace

@@ -74,10 +74,10 @@ subnet, an ECR repo (with the image built and pushed by Terraform via
 template + single-instance Auto Scaling Group), and an ECS service running one
 task. State is local.
 
-Deploys are driven through the `Makefile` (not raw `terraform`). Every
-state-touching target requires `ENV=prod|dev`, which selects the Terraform
-workspace, the resource-name suffix (`-dev` for dev, none for prod), and the
-VPC CIDR.
+Deploys are driven through the `Makefile` (not raw `terraform`). `ENV` selects
+the Terraform workspace, the resource-name suffix (`-dev` for dev, none for
+prod), and the VPC CIDR. **`ENV` defaults to `prod`**, so a regular deploy needs
+no `ENV` flag; pass `ENV=dev` only when targeting the additional environment.
 
 **Prerequisites on the operator's machine:**
 
@@ -114,19 +114,21 @@ aws sso login --profile <your-sso-profile>
 
 cd infra/aws
 make init
-make apply ENV=dev
+make apply            # deploys prod (the default)
+make apply ENV=dev    # deploys the additional dev environment
 ```
 
 Terraform builds and pushes the image, then stands up the cluster, ASG, and
 service. The host is reachable at a stable Elastic IP (the `instance_public_ip`
 output) that persists across instance replacement.
 
-**Operator commands** (`make help` in `infra/aws/` lists them; all require `ENV`):
+**Operator commands** (`make help` in `infra/aws/` lists them; `ENV` defaults to
+`prod`, add `ENV=dev` to target the additional environment):
 
 ```bash
-make outputs ENV=dev   # refresh state and print outputs (cluster, image, IP)
-make smoke   ENV=dev   # run benign + exploit curls against the live host
-make destroy ENV=dev   # tear everything down
+make outputs           # refresh state and print outputs (cluster, image, IP)
+make smoke             # run benign + exploit curls against the live host
+make destroy           # tear everything down
 ```
 
 The app listens directly on the EC2 host's Elastic IP at **port 8000** (security
@@ -164,7 +166,7 @@ docs/superpowers/
 
 ```bash
 cd infra/aws
-make destroy ENV=dev
+make destroy           # prod (default); add ENV=dev for the dev environment
 ```
 
 The destroy step force-deletes the ECR repo even if images remain (the
