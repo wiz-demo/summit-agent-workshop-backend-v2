@@ -158,8 +158,6 @@ infra/wiz/                   Wiz AWS connector + IAM role (Terraform v2)
 docs/superpowers/
   specs/                     Design specs for the demo features
   plans/                     Implementation plans for executing the specs
-.github/workflows/
-  build-scan-push.yml        Image build + Wiz container scan + push pipeline
 ```
 
 ## Tearing down the deployment
