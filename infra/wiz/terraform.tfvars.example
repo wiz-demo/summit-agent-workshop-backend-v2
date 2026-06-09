@@ -40,3 +40,24 @@ github_app_private_key_path = "github-app.pem"
 
 # ----- Dev Wiz project -----
 project_name_dev = "TF-Project-Dev-CodeChallange"
+
+# =============================================================================
+# Tenant 2 — second Wiz tenant connected to the SAME AWS account
+# =============================================================================
+
+# ----- Tenant 2 Wiz service-account credentials -----
+wiz_client_id_2     = "REPLACE_WITH_TENANT2_WIZ_CLIENT_ID"
+wiz_client_secret_2 = "REPLACE_WITH_TENANT2_WIZ_CLIENT_SECRET"
+# Tenant 2 data center (may differ from tenant 1):
+wiz_env_2 = "test"
+
+# ----- Tenant 2 Wiz IAM role (wiz-iam sub-project) -----
+wiz_role_name_2     = "WizAccess-Role-CodeChallange-Tenant2"
+iam_policy_suffix_2 = "-codechallange-t2"
+# Provided by Wiz: tenant 2's data-center role allowed to assume the customer role.
+wiz_remote_arn_2 = "REPLACE_WITH_TENANT2_ASSUME_ROLE_DELEGATOR_ARN"
+
+# ----- Tenant 2 connectors / project -----
+connector_name_2        = "TF-AWS-Connector-CodeChallange-Tenant2"
+github_connector_name_2 = "TF-GitHub-Connector-CodeChallange-Tenant2"
+project_name_dev_2      = "TF-Project-Dev-CodeChallange-Tenant2"

@@ -6,6 +6,9 @@ Provisions Wiz connectors via the `wiz-v2` Terraform provider:
   assumes to scan it (two-stage apply: IAM role first, then connector).
 - **GitHub** connector (GitHub App auth against github.com). Self-contained —
   no IAM dependency; provisioned with the root module.
+- **Two Wiz tenants** — the stack now supports provisioning connectors for TWO
+  separate Wiz tenants scanning the same AWS account, configured via the `*_2`
+  variables in `terraform.tfvars`.
 
 Adapted from the `terraform-test` reference repo.
 
@@ -45,13 +48,48 @@ make apply   # IAM first, then connector
 
 After apply, check the Wiz UI under Settings → Connectors. Both
 `TF-AWS-Connector-CodeChallange` and `TF-GitHub-Connector-CodeChallange`
-should appear and start their first scan within a few minutes.
+should appear and start their first scan within a few minutes. If tenant 2 is
+configured, its connectors (suffixed `-Tenant2`) will appear in tenant 2's
+Wiz UI.
 
 ## Tear down
 
 ```bash
 make destroy   # destroys connector first, then IAM role
 ```
+
+## Two Wiz tenants
+
+The stack supports provisioning connectors for TWO separate Wiz tenants that
+scan the same AWS account (`800618367342`). This allows separate Wiz
+organizations to independently assess the same infrastructure.
+
+- **Tenant 1** (primary) is configured via the base variables: `wiz_client_id`,
+  `wiz_client_secret`, `wiz_env`, `wiz_role_name`, `iam_policy_suffix`,
+  `wiz_remote_arn`, `connector_name`, `github_connector_name`, and
+  `project_name_dev`.
+
+- **Tenant 2** is configured entirely via the `*_2` variables in
+  `terraform.tfvars`: `wiz_client_id_2`, `wiz_client_secret_2`, `wiz_env_2`,
+  `wiz_role_name_2`, `iam_policy_suffix_2`, `wiz_remote_arn_2`,
+  `connector_name_2`, `github_connector_name_2`, and `project_name_dev_2`.
+
+The `wiz-iam` sub-project provisions ONE IAM role per tenant. Both roles live
+in the same AWS account, so they must have distinct names (`wiz_role_name` vs
+`wiz_role_name_2`) and distinct policy suffixes (`iam_policy_suffix` vs
+`iam_policy_suffix_2`). Each role trusts its respective Wiz data-center
+delegator ARN (`wiz_remote_arn` / `wiz_remote_arn_2`).
+
+The tenant-2 GitHub connector reuses tenant 1's GitHub App (same
+`github_app_id` and PEM file). Both connectors authenticate to github.com with
+the same credentials.
+
+Running `make apply` provisions both tenants in a single run: IAM roles for
+both tenants first (via the `wiz-iam` sub-project), then connectors and
+projects for both tenants.
+
+Tenant 2's UI objects are suffixed `-Tenant2` (e.g.
+`TF-AWS-Connector-CodeChallange-Tenant2`) to distinguish them from tenant 1.
 
 ## Layout
 
