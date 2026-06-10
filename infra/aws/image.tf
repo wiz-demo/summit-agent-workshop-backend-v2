@@ -35,6 +35,7 @@ resource "terraform_data" "image_build" {
       docker buildx build \
         --platform linux/amd64 \
         --provenance=false \
+        --build-arg GIT_SHA=${local.image_tag} \
         --file ${path.module}/../../docker/debian/Dockerfile \
         --tag ${local.image_uri} \
         --push \
