@@ -11,7 +11,7 @@
 # SCP-allowed region only (us-east-1 | us-east-2 | us-west-2)
 region = "us-east-1"
 
-# AWS SSO profile that maps to the target account
+# AWS profile that maps to the target account
 aws_profile = "REPLACE_WITH_YOUR_AWS_PROFILE"
 
 # Required tags

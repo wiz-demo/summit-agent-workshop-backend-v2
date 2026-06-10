@@ -18,7 +18,7 @@ help:
 	@echo "  outputs     - refresh state and print outputs"
 	@echo "  smoke       - hit the deployed endpoint with benign + exploit payloads"
 	@echo ""
-	@echo "Requires SSO: aws sso login --profile dev-product-cto-play"
+	@echo "Requires: aws configure --profile summit-workshop"
 
 init:
 	$(TF) init -input=false

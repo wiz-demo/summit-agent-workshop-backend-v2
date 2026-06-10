@@ -4,7 +4,7 @@ TFVARS  := $(CURDIR)/terraform.tfvars
 AWS_DIR := ../aws
 
 # Which infra/aws environment the Wiz project groups. The project filters on
-# tag environment=$(ENV) in account 800618367342, so that AWS stack must be
+# tag environment=$(ENV) in account 975800360817, so that AWS stack must be
 # deployed first (see check-aws-deployed). Override with `make apply ENV=prod`.
 ENV     ?= prod
 
@@ -25,7 +25,7 @@ help:
 	@echo "  1. Copy terraform.tfvars.example to terraform.tfvars"
 	@echo "  2. Fill in wiz_client_id and wiz_client_secret from Wiz Console"
 	@echo "     (Settings > Service Accounts)"
-	@echo "  3. aws sso login --profile dev-product-cto-play"
+	@echo "  3. aws sso login --profile summit-workshop"
 	@echo "  4. terraform login tf.app.wiz.io  (only first time, if private registry asks)"
 	@echo
 	@echo "CROSS-STACK DEPENDENCY:"

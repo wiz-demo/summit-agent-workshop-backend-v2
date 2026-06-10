@@ -74,11 +74,11 @@ Confirm what is actually deployed from this repository.
 Go to **Code to Cloud → Correlations**, or ask Mika:
 *"Show me all cloud resources deployed from repository wiz-demo/summit-agent-workshop-backend."*
 
-- **Image:** `800618367342.dkr.ecr.us-east-1.amazonaws.com/agent-workshop-backend:<git-sha>`
+- **Image:** `975800360817.dkr.ecr.us-east-1.amazonaws.com/agent-workshop-backend-061026:<git-sha>`
   (Terraform tags each image with the 12-character git short SHA of the deployed commit.)
-- **Cluster:** `agent-workshop` (ECS on EC2)
-- **Capacity provider:** `agent-workshop-ec2` (single-instance ASG)
-- **Task family:** `agent-workshop-backend` (the container inside the task is named `backend`)
+- **Cluster:** `agent-workshop-061026` (ECS on EC2)
+- **Capacity provider:** `agent-workshop-ec2-061026` (single-instance ASG)
+- **Task family:** `agent-workshop-backend-061026` (the container inside the task is named `backend`)
 
 ### Step 4 — Analyze Network Exposure
 

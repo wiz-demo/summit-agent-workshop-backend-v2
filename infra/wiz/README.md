@@ -3,7 +3,7 @@
 Provisions Wiz connectors via the `wiz-v2` Terraform provider for two
 independent Wiz tenants scanning the same AWS account:
 
-- **AWS** connectors targeting account `800618367342`, plus the IAM roles Wiz
+- **AWS** connectors targeting account `975800360817`, plus the IAM roles Wiz
   assumes to scan it (two-stage apply: IAM roles first, then connectors).
 - **GitHub** connectors (GitHub App auth against github.com). Self-contained —
   no IAM dependency; provisioned with the root module. Currently disabled for
@@ -14,7 +14,7 @@ Adapted from the `terraform-test` reference repo.
 ## Prerequisites
 
 - Terraform `>= 1.10.0`
-- AWS CLI v2 with SSO configured for profile `dev-product-cto-play`
+- AWS CLI v2 with profile `summit-workshop` configured
 - A Wiz service account (Wiz Console → Settings → Service Accounts) with at
   least `create:connectors` and `read:tenant` scopes — one per tenant
 - Access to the Wiz private Terraform registry at `tf.app.wiz.io`
@@ -33,8 +33,8 @@ $EDITOR terraform.tfvars
 # terraform.tfvars; keep the default path or override github_app_private_key_path.
 cp /path/to/your-downloaded-key.pem github-app.pem
 
-# AWS SSO
-aws sso login --profile dev-product-cto-play
+# AWS credentials (profile must be configured)
+aws sts get-caller-identity --profile summit-workshop
 ```
 
 ## Apply
@@ -58,7 +58,7 @@ make destroy   # destroys connector first, then IAM role
 ## Two Wiz tenants
 
 The stack provisions connectors for TWO separate Wiz tenants that scan the
-same AWS account (`800618367342`). This allows separate Wiz organizations to
+same AWS account (`975800360817`). This allows separate Wiz organizations to
 independently assess the same infrastructure.
 
 - **Tenant 1** is configured via the `*_t1` variables: `wiz_client_id_t1`,

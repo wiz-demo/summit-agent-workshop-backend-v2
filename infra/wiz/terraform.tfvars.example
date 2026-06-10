@@ -10,7 +10,7 @@
 # =============================================================================
 
 # ----- Shared: AWS target -----
-aws_region     = "us-east-1" # SCP-allowed: us-east-1 | us-east-2 | us-west-2
+aws_region     = "us-east-1"
 aws_profile    = "REPLACE_WITH_YOUR_AWS_PROFILE"
 owner          = "REPLACE_WITH_OWNER_TAG"
 aws_account_id = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
