@@ -28,8 +28,9 @@ module "wiz_t1" {
   iam_policy_suffix         = var.iam_policy_suffix_t1
 }
 
-# --- Tenant 2 -----------------------------------------------------------------
+# --- Tenant 2 (disabled) ------------------------------------------------------
 
+/* Tenant 2 disabled for the fork — provider, vars, resources all gated off.
 data "wiz-v2_graphql_query" "me_t2" {
   provider = wiz-v2.tenant2
   query    = <<-EOQ
@@ -57,3 +58,4 @@ module "wiz_t2" {
   rolename                  = var.wiz_role_name_t2
   iam_policy_suffix         = var.iam_policy_suffix_t2
 }
+*/

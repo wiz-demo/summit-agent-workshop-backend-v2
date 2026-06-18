@@ -23,10 +23,11 @@ variable "connector_name_t1" {
   type        = string
 }
 
-variable "connector_name_t2" {
-  description = "Display name for the tenant 2 Wiz AWS connector shown in the Wiz UI."
-  type        = string
-}
+# Tenant 2 connector_name disabled — resource is commented out.
+# variable "connector_name_t2" {
+#   description = "Display name for the tenant 2 Wiz AWS connector shown in the Wiz UI."
+#   type        = string
+# }
 
 # --- Resource ---------------------------------------------------------------
 
@@ -64,8 +65,9 @@ resource "wiz-v2_generic_connector" "aws_t1" {
   })
 }
 
-# --- Tenant 2 ---------------------------------------------------------------
+# --- Tenant 2 (disabled) ----------------------------------------------------
 
+/* Tenant 2 disabled for the fork — provider and IAM role module are gated off.
 resource "wiz-v2_generic_connector" "aws_t2" {
   provider = wiz-v2.tenant2
 
@@ -87,6 +89,7 @@ resource "wiz-v2_generic_connector" "aws_t2" {
     skipOrganizationScan = true
   })
 }
+*/
 
 # --- Outputs ----------------------------------------------------------------
 
@@ -105,17 +108,18 @@ output "aws_connector_name_t1" {
   value       = wiz-v2_generic_connector.aws_t1.name
 }
 
-output "aws_role_arn_t2" {
-  description = "ARN of the IAM role Wiz tenant 2 assumes to scan the account."
-  value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_t2
-}
-
-output "aws_connector_id_t2" {
-  description = "Tenant 2 Wiz AWS connector ID (visible in the Wiz UI)."
-  value       = wiz-v2_generic_connector.aws_t2.id
-}
-
-output "aws_connector_name_t2" {
-  description = "Tenant 2 Wiz AWS connector display name."
-  value       = wiz-v2_generic_connector.aws_t2.name
-}
+# Tenant 2 outputs disabled — resource is commented out.
+# output "aws_role_arn_t2" {
+#   description = "ARN of the IAM role Wiz tenant 2 assumes to scan the account."
+#   value       = data.terraform_remote_state.wiz_iam.outputs.role_arn_t2
+# }
+#
+# output "aws_connector_id_t2" {
+#   description = "Tenant 2 Wiz AWS connector ID (visible in the Wiz UI)."
+#   value       = wiz-v2_generic_connector.aws_t2.id
+# }
+#
+# output "aws_connector_name_t2" {
+#   description = "Tenant 2 Wiz AWS connector display name."
+#   value       = wiz-v2_generic_connector.aws_t2.name
+# }

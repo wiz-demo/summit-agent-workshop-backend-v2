@@ -51,8 +51,8 @@ variable "wiz_remote_arn_t1" {
   type        = string
 }
 
-# ----- Tenant 2 -----
-
+# ----- Tenant 2 (disabled) -----
+/* Tenant 2 vars disabled — provider and resources are commented out.
 variable "wiz_env_t2" {
   description = "Wiz environment (data center) for tenant 2."
   type        = string
@@ -84,3 +84,4 @@ variable "wiz_remote_arn_t2" {
   description = "Wiz data-center role ARN allowed to assume tenant 2's customer IAM role. Provided by Wiz; may differ from wiz_remote_arn if tenant 2 is in another data center."
   type        = string
 }
+*/
