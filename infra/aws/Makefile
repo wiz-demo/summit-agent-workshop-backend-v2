@@ -6,9 +6,9 @@ TFVARS := $(CURDIR)/terraform.tfvars
 ENV ?= prod
 
 # Remote state bucket (managed outside Terraform via `make bootstrap`)
-STATE_BUCKET := summit-workshop-tfstate-975800360817
+STATE_BUCKET := tf-state-800618367342-us-east-1
 AWS_REGION   := us-east-1
-AWS_PROFILE  := summit-workshop
+AWS_PROFILE  := dev-product-cto-play
 
 .PHONY: help init fmt validate check-env workspace plan apply destroy outputs smoke bootstrap
 
@@ -24,7 +24,7 @@ help:
 	@echo "  smoke       - hit the deployed endpoint with benign + exploit payloads"
 	@echo "  bootstrap   - one-time: create+configure the S3 state bucket"
 	@echo ""
-	@echo "Requires: aws configure --profile summit-workshop"
+	@echo "Requires: aws configure --profile dev-product-cto-play"
 
 init:
 	$(TF) init -input=false

@@ -1,0 +1,15 @@
+# =============================================================================
+# infra/bootstrap — config template
+# =============================================================================
+# Copy to `terraform.tfvars` and fill in. This module is applied ONCE with
+# local state to create the S3 bucket that backs every other module.
+#   cp terraform.tfvars.example terraform.tfvars
+# =============================================================================
+
+region      = "us-east-1"
+aws_profile = "dev-product-cto-play"
+owner       = "REPLACE_WITH_OWNER_TAG"
+
+# Override only if you want a different bucket name. Default matches the
+# value hardcoded in every consuming module's backend "s3" block.
+# state_bucket_name = "tf-state-800618367342-us-east-1"
