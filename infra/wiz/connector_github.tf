@@ -7,6 +7,8 @@
 
 # --- Variables --------------------------------------------------------------
 
+# GitHub connector vars disabled — all github_* resources are commented out below.
+/*
 variable "github_app_id" {
   description = "GitHub App ID Wiz authenticates as. Found in the GitHub App's settings page."
   type        = string
@@ -31,6 +33,7 @@ variable "github_connector_name_t2" {
   description = "Display name for the tenant 2 Wiz GitHub connector shown in the Wiz UI."
   type        = string
 }
+*/
 
 # --- Tenant 1 ---------------------------------------------------------------
 

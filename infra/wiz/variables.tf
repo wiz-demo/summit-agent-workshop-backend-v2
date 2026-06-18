@@ -31,8 +31,8 @@ variable "wiz_client_secret_t1" {
   }
 }
 
-# ----- Tenant 2 -----
-
+# ----- Tenant 2 (disabled) -----
+/* Tenant 2 vars disabled — provider and resources are commented out.
 variable "wiz_env_t2" {
   description = "Wiz environment (data center) for tenant 2."
   type        = string
@@ -59,6 +59,7 @@ variable "wiz_client_secret_t2" {
     error_message = "wiz_client_secret_t2 must not be empty."
   }
 }
+*/
 
 # =============================================================================
 # AWS Provider Variables

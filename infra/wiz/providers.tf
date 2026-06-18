@@ -32,9 +32,10 @@ provider "wiz-v2" {
   client_secret = var.wiz_client_secret_t1
 }
 
-provider "wiz-v2" {
-  alias         = "tenant2"
-  env           = var.wiz_env_t2
-  client_id     = var.wiz_client_id_t2
-  client_secret = var.wiz_client_secret_t2
-}
+# Tenant 2 provider disabled — all tenant 2 resources are commented out.
+# provider "wiz-v2" {
+#   alias         = "tenant2"
+#   env           = var.wiz_env_t2
+#   client_id     = var.wiz_client_id_t2
+#   client_secret = var.wiz_client_secret_t2
+# }
