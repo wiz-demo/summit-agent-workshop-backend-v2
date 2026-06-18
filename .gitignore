@@ -36,3 +36,9 @@ CLAUDE.md
 secrets
 GUIDE.md
 GUIDE.md
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars

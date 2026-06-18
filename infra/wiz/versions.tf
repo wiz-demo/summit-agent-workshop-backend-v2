@@ -10,4 +10,13 @@ terraform {
       source = "tf.app.wiz.io/wizsec/wiz-v2"
     }
   }
+
+  backend "s3" {
+    bucket       = "tf-state-800618367342-us-east-1"
+    key          = "summit-agent-workshop/infra/wiz/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+    profile      = "dev-product-cto-play"
+  }
 }

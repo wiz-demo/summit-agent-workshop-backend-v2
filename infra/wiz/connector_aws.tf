@@ -31,9 +31,12 @@ variable "connector_name_t2" {
 # --- Resource ---------------------------------------------------------------
 
 data "terraform_remote_state" "wiz_iam" {
-  backend = "local"
+  backend = "s3"
   config = {
-    path = "${path.module}/wiz-iam/terraform.tfstate"
+    bucket  = "tf-state-800618367342-us-east-1"
+    key     = "summit-agent-workshop/infra/wiz/wiz-iam/terraform.tfstate"
+    region  = "us-east-1"
+    profile = "dev-product-cto-play"
   }
 }
 
