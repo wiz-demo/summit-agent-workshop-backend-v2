@@ -26,3 +26,23 @@ vpc_cidr_by_env = {
   prod = "10.42.0.0/16"
   dev  = "10.43.0.0/16"
 }
+
+# ---- Wiz Runtime Sensor -----------------------------------------------------
+# Pull key from https://app.wiz.io/tenant-info/general — pick domain
+# `registry.wiz.io` (or `wizio.azurecr.io` / `wizfedramp.azurecr.us`) and copy
+# the Username / Password shown.
+wiz_sensor_image_pull_username = "REPLACE_WITH_WIZ_PULL_KEY_USERNAME"
+wiz_sensor_image_pull_password = "REPLACE_WITH_WIZ_PULL_KEY_PASSWORD"
+
+# Service account from Wiz portal: Settings -> Service Accounts ->
+# create one with type "Sensor".
+wiz_sensor_sa_client_id     = "REPLACE_WITH_WIZ_SENSOR_SA_CLIENT_ID"
+wiz_sensor_sa_client_secret = "REPLACE_WITH_WIZ_SENSOR_SA_CLIENT_SECRET"
+
+# Wiz data center, e.g. "us20" — find at
+# https://app.wiz.io/tenant-info/data-center-and-regions (Tenant Data Center).
+wiz_dc = "REPLACE_WITH_WIZ_DC"
+
+# Defaults shown for clarity — both default to true in variables.tf.
+# wiz_sensor_api_security_enabled     = true
+# wiz_sensor_ecs_task_logging_enabled = true
