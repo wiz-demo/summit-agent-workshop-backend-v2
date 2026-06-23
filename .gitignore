@@ -42,3 +42,4 @@ GUIDE.md
 *.tfstate.*
 .terraform/
 terraform.tfvars
+scripts/wiz-sensor-abuse.sh
