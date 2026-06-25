@@ -9,6 +9,9 @@
 >   exploiting; Wiz tells you where to aim.
 > - **Section 2 — Agentic:** **Red Agent** discovers and exploits, **Green Agent**
 >   investigates and remediates — automatically. You review their work and compare.
+> - **Section 3 — Runtime (Blue Agent):** a scheduled job continuously exploits the
+>   RCE endpoint in the background; the **Blue Agent** auto-investigates the runtime
+>   Threat it raises. You read its verdict. *(Extends beyond the base lab guide.)*
 >
 > Some answers are **run-specific** (e.g. your EC2 IP or the SQLite version) — you
 > capture them from your own tenant rather than matching a fixed string. Each
@@ -30,14 +33,14 @@ login). Both tenants scan the **same** AWS account; each has its own connector.
 
 | Tenant | Used in | Capabilities | Subscription filter |
 |--------|---------|--------------|---------------------|
-| **Tenant 1** | Section 1 | Standard Wiz (Inventory, SAST, Security Graph, Issues) | `TF-AWS-Connector-AgentWorkshop-061026-Tenant1` |
-| **Tenant 2** | Section 2 | Red Agent + Green Agent enabled | `TF-AWS-Connector-AgentWorkshop-061026-Tenant2` |
+| **Tenant 1** | Section 1 | Standard Wiz (Inventory, SAST, Security Graph, Issues) | `TF-AWS-Connector-AgentWorkshop-...-Tenant1` |
+| **Tenant 2** | Sections 2–3 | Red Agent + Green Agent + Blue Agent; Runtime Sensor deployed | `TF-AWS-Connector-AgentWorkshop-...-Tenant2` |
 
 > Switch tenants in the Tenant Manager tenant switcher. If your screen still shows
 > the other section's findings, you're in the wrong tenant.
 
 **The target:** a deliberately vulnerable FastAPI service
-(`agent-workshop-backend-061026`) running on ECS-on-EC2, listening directly on
+(`agent-workshop-backend-...`) running on ECS-on-EC2, listening directly on
 **port 8000** (no load balancer). Two intentionally insecure endpoints:
 
 - `GET /api/users?username=…` — SQL injection (CWE-89)
@@ -45,7 +48,7 @@ login). Both tenants scan the **same** AWS account; each has its own connector.
 
 Data lives in an in-memory SQLite `users` table seeded with three users.
 
-**Total: 14 challenges.**
+**Total: 15 challenges.**
 
 ---
 
@@ -66,13 +69,13 @@ host's `Name` tag?
 <details><summary>Answer</summary>
 
 - **Inventory → Cloud Resources**, filter **Subscription =
-  `TF-AWS-Connector-AgentWorkshop-061026-Tenant1`** and **Type =
+  `TF-AWS-Connector-AgentWorkshop-...-Tenant1`** and **Type =
   `VIRTUAL_MACHINE`**.
-- Open the EC2 host tagged **`Name = agent-workshop-backend-061026`** and copy its
+- Open the EC2 host tagged **`Name = agent-workshop-backend-...`** and copy its
   **public IP / DNS**. The app listens directly on **port 8000** — no load
   balancer in front.
 - Mika shortcut: *"Show me all publicly exposed virtual machines in subscription
-  TF-AWS-Connector-AgentWorkshop-061026-Tenant1."*
+  TF-AWS-Connector-AgentWorkshop-...-Tenant1."*
 
 **Answer:** the host's public IP on port 8000, e.g. `<EC2_PUBLIC_IP>:8000` — run-specific.
 </details>
@@ -110,14 +113,14 @@ Cloud** correlation (or open **Code to Cloud → Correlations**, or ask Mika: *"
 me all cloud resources deployed from repository
 wiz-demo/summit-agent-workshop-backend."*):
 
-- **Image:** `975800360817.dkr.ecr.us-east-1.amazonaws.com/agent-workshop-backend-061026:<git-sha>`
+- **Image:** `975800360817.dkr.ecr.us-east-1.amazonaws.com/agent-workshop-backend-...:<git-sha>`
   — Terraform tags each image with the **12-char git short SHA** of the deployed
   commit.
-- **Cluster:** `agent-workshop-061026` (ECS on EC2)
-- **Capacity provider:** `agent-workshop-ec2-061026` (single-instance ASG)
-- **Task family:** `agent-workshop-backend-061026` (container is named `backend`)
+- **Cluster:** `agent-workshop-...` (ECS on EC2)
+- **Capacity provider:** `agent-workshop-ec2-...` (single-instance ASG)
+- **Task family:** `agent-workshop-backend-...` (container is named `backend`)
 
-**Answer:** image `agent-workshop-backend-061026:<git-sha>`, cluster `agent-workshop-061026`, task family `agent-workshop-backend-061026`.
+**Answer:** image `agent-workshop-backend-...:<git-sha>`, cluster `agent-workshop-...`, task family `agent-workshop-backend-...`.
 </details>
 
 ### A4 — Analyze network exposure
@@ -127,12 +130,12 @@ makes this reachable from anywhere?
 <details><summary>Answer</summary>
 
 **Security Graph → Network Exposure**, Exposed Entity =
-`agent-workshop-backend-061026` (or Mika: *"Show me the network exposure path for
-container agent-workshop-backend-061026."*):
+`agent-workshop-backend-...` (or Mika: *"Show me the network exposure path for
+container agent-workshop-backend-...."*):
 
 ```
 Internet (0.0.0.0/0:8000)
-  → EC2 host security group (agent-workshop-backend-061026)
+  → EC2 host security group (agent-workshop-backend-...)
   → ECS task (bridge network, hostPort 8000)
   → container (backend)
 ```
@@ -235,7 +238,7 @@ container user**; from there the **EC2 instance role** becomes the next pivot
 ## Section 2 — Agentic: Validating & Fixing the Risk (Tenant 2)
 
 > Switch to **Tenant 2** in the Tenant Manager switcher and filter on
-> `TF-AWS-Connector-AgentWorkshop-061026-Tenant2`. See how the agents close the
+> `TF-AWS-Connector-AgentWorkshop-...-Tenant2`. See how the agents close the
 > gap — validating exploitability and generating the fix automatically — then
 > compare against your manual run.
 
@@ -246,7 +249,7 @@ and what did Red Agent capture that a SAST finding alone cannot?
 <details><summary>Answer</summary>
 
 **Findings → Attack Surface**, locate **"SQL / NoSQL Injection via username
-parameter on Users API"** on `agent-workshop-backend-061026`. Unlike the static
+parameter on Users API"** on `agent-workshop-backend-...`. Unlike the static
 SAST finding, Red Agent captured **Evidence**: the exact payloads it sent, the
 responses it got back, and the data it extracted — proof the finding is
 **exploitable from the internet**, produced **autonomously and unattended**.
@@ -303,39 +306,75 @@ rows = sqlite_db.execute(query, (username,)).fetchall()
 **Answer:** parameterized query (`username = ?`).
 </details>
 
-### B5 — Close the remediation loop
-**Q:** Green Agent can hand the fix off to one more agent that turns it into a
-reviewable change. What does that agent do?
+---
+
+## Section 3 — Runtime Detection & the Blue Agent (Tenant 2)
+
+> *Extends beyond the base lab guide.* Sections 1–2 stopped at finding and fixing
+> the vulnerability. Section 3 answers the next question: **what happens when
+> someone actually exploits the RCE endpoint while Wiz is watching at runtime?**
+>
+> The Wiz **Runtime Sensor** is deployed onto this cluster as a daemon. A
+> **scheduled job runs continuously in the background**, replaying a
+> post-exploitation chain (`scripts/wiz-sensor-abuse.sh`) against the workload
+> through `GET /api/execute` on a fixed cadence. **You don't launch anything** —
+> fresh detections and threats are always firing on their own; you just
+> investigate what's already there. Each run stamps a `wiz-attack-<timestamp>`
+> nonce you can grep for in the portal to pin a specific run.
+
+### C1 — Map the kill chain to MITRE ATT&CK
+**Q:** The background chain fires five stages. Match each to its MITRE technique
+and the artifact it touches.
 
 <details><summary>Answer</summary>
 
-The **Coding Agent** takes Green Agent's fix, applies it to a branch, and opens a
-**pull request** for review — closing the loop from finding → merged fix without
-leaving Wiz.
+| Stage | Behavior | MITRE | Artifact |
+|---|---|---|---|
+| 1 | Discovery | **T1082** | `id; whoami; uname -a` |
+| 2 | OS credential dumping | **T1003** | reads `/etc/shadow` |
+| 3 | Cloud credential theft | **T1552.005** | ECS task metadata at `169.254.170.2` |
+| 4 | C2 / exfil channel | **T1071 / T1095** | outbound to `198.51.100.7:4444` (TEST-NET-3, RFC 5737) |
+| 5 | Persistence | **T1546** | writes + `chmod +x /tmp/.backdoor.sh` |
 
-**Answer:** the Coding Agent opens a pull request.
+Stage 3 is the real-world pivot foreshadowed in A8: shell access → steal the
+ECS/EC2 role credentials from the metadata endpoint.
+
+**Answer:** T1082 → T1003 → T1552.005 → T1071/T1095 → T1546.
 </details>
 
-### B6 — Static finding vs. validated issue
-**Q:** Weigh the two outcomes. In Section 1 the finding stayed a static HIGH in
-the backlog; in Section 2 it became a validated CRITICAL with a fix. Across
-effort, completeness, evidence, remediation, and scale — how does manual compare
-to agentic?
+### C2 — Find the Threat in Wiz Defend
+**Q:** A few minutes after a background run, Wiz Defend correlates the detections
+into a Threat on the workload. Where do you find it, and what status filter?
 
 <details><summary>Answer</summary>
 
-| Aspect | Manual (Section 1) | Agentic (Section 2) |
-|---|---|---|
-| Effort to find | Minutes of hands-on probing, you at the keyboard throughout | Runs unattended in the background; no one driving |
-| Completeness | One proven: the SQL injection | All three: SQLi, command injection, insecure CORS |
-| Exploitation evidence | Your own `curl` output, captured by hand | Payload + response recorded automatically per finding |
-| Remediation guidance | You write the parameterized-query fix yourself | Green Agent generates the concrete code change |
-| Scales across many apps | Linear, bounded by your time | Runs continuously across every app at once |
+**Wiz Defend → Threats**, filtered to **status OPEN / IN_PROGRESS**, on the
+`agent-workshop-backend-...` workload. The sensor detections (e.g. the
+anomalous `/etc/shadow` read) correlate into a Threat. The exact Threat ID is
+**run-specific** — threats regroup per run — so open the most recent one on the
+workload and match the `wiz-attack-<timestamp>` nonce from the run.
 
-Agents validate, broaden, and produce repeatable evidence at scale; humans bring
-business-logic context and judgment for the nuanced cases.
+**Answer:** Wiz Defend → Threats, status OPEN / IN_PROGRESS, on `agent-workshop-backend-...` — run-specific.
+</details>
 
-**Answer:** static HIGH backlog finding → validated CRITICAL with evidence + a fix; agents for validation & scale, humans for context.
+### C3 — Read the Blue Agent's verdict
+**Q:** Open the Threat. The Blue Agent has already investigated it with no one at
+the keyboard. What outputs does it produce, and what verdict did it land on for
+this chain?
+
+<details><summary>Answer</summary>
+
+The **Wiz Blue Agent** (the SecOps AI Agent) auto-investigates every new or
+updated Threat, finishing in about a minute. It produces a **Verdict**,
+**Conclusion**, **Confidence level**, **Investigation process**, and **Severity**.
+
+For this chain the recorded verdict is **Security Test** with **High** confidence:
+the Blue Agent recognizes the `wiz-attack-*` markers in the commands, the
+non-routable TEST-NET-3 C2 target (`198.51.100.7`), and the workshop-named tenant,
+and concludes it's an authorized exercise rather than a real intrusion. Read the
+actual verdict + confidence off your own Threat.
+
+**Answer:** Verdict = **Security Test**, confidence **High** — run-specific.
 </details>
 
 ---
@@ -346,7 +385,7 @@ business-logic context and judgment for the nuanced cases.
 |---|---|---|---|
 | A1 | Identify the target | Manual | host public IP on port 8000 *(run-specific)* |
 | A2 | Review Wiz SAST | Manual | CWE-89 at `app/main.py:27` |
-| A3 | Map code to runtime | Manual | image/cluster/task `agent-workshop…-061026` |
+| A3 | Map code to runtime | Manual | image/cluster/task `agent-workshop-...` |
 | A4 | Analyze network exposure | Manual | `0.0.0.0/0:8000` |
 | A5 | Exploit the SQL injection | Manual | 3 rows; 4 cols + `sqlite_version()` *(run-specific)* |
 | A6 | Exfiltrate the data | Manual | `admin@code-challenge.example`, role `admin` |
@@ -356,10 +395,11 @@ business-logic context and judgment for the nuanced cases.
 | B2 | HIGH → CRITICAL | Agentic | "Red Agent discovered critical severity vulnerability / misconfiguration" |
 | B3 | Completeness | Agentic | 3 findings — SQLi + command injection + CORS |
 | B4 | Green Agent fix | Agentic | parameterized query (`username = ?`) |
-| B5 | Coding Agent PR | Agentic | Coding Agent opens a pull request |
-| B6 | Manual vs. agentic | Agentic | static HIGH → validated CRITICAL + fix; agents scale, humans judge |
+| C1 | MITRE kill chain | Runtime | T1082 → T1003 → T1552.005 → T1071/T1095 → T1546 |
+| C2 | Find the Threat in Wiz Defend | Runtime | Wiz Defend → Threats, OPEN/IN_PROGRESS *(run-specific)* |
+| C3 | Blue Agent verdict | Runtime | Security Test, High confidence *(run-specific)* |
 
-**Total: 14 challenges.**
+**Total: 15 challenges.**
 
 ## Wrap-Up
 
@@ -370,8 +410,11 @@ business-logic context and judgment for the nuanced cases.
   CRITICAL.
 - **Green Agent** closes the remediation gap: it traces the finding back through
   the deployment pipeline and generates a fix at the root cause.
-- The strongest program combines both: agents for validation and scale, people for
-  context and edge cases.
+- **Blue Agent** closes the runtime gap: when the RCE endpoint is exploited by the
+  scheduled background chain, it auto-investigates the resulting Threat and returns
+  a verdict before a human opens it.
+- The strongest program combines all three: agents for validation, remediation, and
+  runtime triage at scale; people for context and edge cases.
 
 ### Take It Further
 
