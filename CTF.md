@@ -7,9 +7,9 @@
 > - **Section 1 — Manual:** traditional penetration testing, guided by Wiz
 >   intelligence (SAST, Code-to-Cloud, Network Exposure, Issues). You do the
 >   exploiting; Wiz tells you where to aim.
-> - **Section 2 — Agentic:** **Red Agent** discovers and exploits, **Green Agent**
+> - **Section 2 — Agentic: Red Agent** discovers and exploits, **Green Agent**
 >   investigates and remediates — automatically. You review their work and compare.
-> - **Section 3 — Runtime (Blue Agent):** a scheduled job continuously exploits the
+> - **Section 3 — Agentic: Blue Agent** a scheduled job continuously exploits the
 >   RCE endpoint in the background; the **Blue Agent** auto-investigates the runtime
 >   Threat it raises. You read its verdict. *(Extends beyond the base lab guide.)*
 >
