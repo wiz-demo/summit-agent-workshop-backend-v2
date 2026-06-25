@@ -34,8 +34,6 @@ docs/superpowers/
 .python-version
 CLAUDE.md
 secrets
-GUIDE.md
-GUIDE.md
 
 # Terraform
 *.tfstate
@@ -43,3 +41,4 @@ GUIDE.md
 .terraform/
 terraform.tfvars
 scripts/wiz-sensor-abuse.sh
+.mcp.json
